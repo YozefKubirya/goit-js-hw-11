@@ -1,33 +1,63 @@
+
+
 import './css/common.css'
 import axios from 'axios';
-import Notiflix from 'notiflix';
-import simpleLightbox from 'simplelightbox';
+import Notiflix, { Notify } from 'notiflix';
 import NewApiService from './js/api-service';
+import SimpleLightbox from 'simplelightbox';
+import "simplelightbox/dist/simple-lightbox.min.css";
 const refs = {
    form: document.querySelector('.js-search-form'),
    loadMoreBtn: document.querySelector('[data-action="load-more"]'),
    gallery:document.querySelector('.js-gallery-container')
 }
 
+var lightbox = new SimpleLightbox('.gallery a', {
+ captionsData: 'alt',
+   captionDelay: 300,
+   doClose:true,  
+})
+//  {
+//    
+// }
 refs.form.addEventListener('submit', onFormSearch);
 refs.loadMoreBtn.addEventListener('click', onLoadMoreBtn)
 const service = new NewApiService();
+refs.loadMoreBtn.classList.add('is-hidden');
+
 function onFormSearch(e) {
    e.preventDefault();
-   service.query = e.currentTarget.elements.searchQuery.value;
+ 
    service.resetPage();
-   console.log(service.query);
-   service.getFetch().then(addImagesToGallery)
+   service.query = e.currentTarget.elements.searchQuery.value.trim();
+
+   if (service.query==='') {
+      Notiflix.Notify.info('Please write something',{timeout:3000})
+   } else { 
+   clearArticlesContainer();
+      service.getFetch().then(createMarkup)
+   }
+   
 };
 
 function onLoadMoreBtn() {
-   service.getFetch().then(addImagesToGallery);
+   service.getFetch().then(createMarkup);
    
 }
 
 function createMarkup(images) {
-   const markup = images.map(({ webformatURL, largeImageURL, likes, views, comments, downloads ,tags}) => {return `<div class="photo-card">
-         <a href="${largeImageURL}"><img class="rounded-lg mb-3" src="${webformatURL}" alt="cat1" title="${tags}" loading="lazy" /></a>
+   console.log(images.totalHits)
+   showTotalHits(images.totalHits, images.hits.length);
+   
+   if (images.hits.length === 0) {
+      Notiflix.Notify.warning('Sorry, there are no images matching your search query. Please try again.', { timeout: 3000 }
+      );
+   } else {
+      refs.loadMoreBtn.classList.remove('is-hidden');
+
+      const markup = images.hits.map(({ webformatURL, largeImageURL, likes, views, comments, downloads, tags }) => {
+      return `<div class="photo-card">
+         <a href="${largeImageURL}"><img src="${webformatURL}" alt="${tags}" loading="lazy" /></a>
          <div class="info">
             <p class="info-item">
                <b>Likes</b>
@@ -47,42 +77,30 @@ function createMarkup(images) {
             </p>
          </div>
       </div>`;
-  }).join('');
-   return markup;
-
+   }).join('');
+    
+      refs.gallery.insertAdjacentHTML('beforeend', markup);
+      checkEndOfArticles(images.totalHits)
+      lightbox.refresh()
+   }
+   
 }
 
-function addImagesToGallery(markup) {
-   refs.gallery.insertAdjacentHTML('afterbegin',markup)
+function clearArticlesContainer() {
+   refs.gallery.innerHTML = '';
 }
 
+function showTotalHits(totalHits, length) {
+   if (length === 0) {
+      return;
+   } else if(service.page===2) {
+      Notiflix.Notify.success(`Hooray! We found ${totalHits} images.`,{timeout:3000})
+   }
+}
 
-
-
-
-
-
-// {/* <div class="photo-card">
-// <a  href="${largeImageURL}"><img class="rounded-lg mb-3" src="${webformatURL}"  alt="cat1" title="${tags}" loading="lazy" width="320" height="213" /></a>
-
-//   <div class="info">
-//     <p class="info-item">
-//       <b>Likes${likes}</b>
-//     </p>
-//     <p class="info-item">
-//       <b>Views${views}</b>
-//     </p>
-//     <p class="info-item">
-//       <b>Comments${comments}</b>
-//     </p>
-//     <p class="info-item">
-//       <b>Downloads${downloads}</b>
-//     </p>
-//   </div>
-// </div> */}
-// const url = `https://pixabay.com/api/`;
-// const options = {
-//    headers: {
-//       Authorization:'36269474-83b619d05c1927e78eac327ce'
-//    }
-// }
+function checkEndOfArticles(totalHits) {
+   if (totalHits/service.per_page<=service.page) {
+      refs.loadMoreBtn.classList.add('is-hidden');
+     return Notiflix.Notify.info(`We're sorry, but you've reached the end of search results.`,{timeout:3000})
+   }
+}
