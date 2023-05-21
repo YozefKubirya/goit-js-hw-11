@@ -2,7 +2,7 @@
 
 import './css/common.css'
 import axios from 'axios';
-import Notiflix, { Notify } from 'notiflix';
+import Notiflix from 'notiflix';
 import NewApiService from './js/api-service';
 import SimpleLightbox from 'simplelightbox';
 import "simplelightbox/dist/simple-lightbox.min.css";
@@ -12,22 +12,20 @@ const refs = {
    gallery:document.querySelector('.js-gallery-container')
 }
 
-var lightbox = new SimpleLightbox('.gallery a', {
+var lightbox = new SimpleLightbox('.js-gallery-container  a', {
  captionsData: 'alt',
    captionDelay: 300,
    doClose:true,  
 })
-//  {
-//    
-// }
+
 refs.form.addEventListener('submit', onFormSearch);
-refs.loadMoreBtn.addEventListener('click', onLoadMoreBtn)
+refs.loadMoreBtn.addEventListener('click', onLoadMoreBtn);
+
 const service = new NewApiService();
 refs.loadMoreBtn.classList.add('is-hidden');
 
 function onFormSearch(e) {
    e.preventDefault();
- 
    service.resetPage();
    service.query = e.currentTarget.elements.searchQuery.value.trim();
 
@@ -60,19 +58,19 @@ function createMarkup(images) {
          <a href="${largeImageURL}"><img src="${webformatURL}" alt="${tags}" loading="lazy" /></a>
          <div class="info">
             <p class="info-item">
-               <b>Likes</b>
+               <b>Likes:</b>
                <b>${likes}</b>
             </p>
             <p class="info-item">
-               <b>Views</b>
+               <b>Views:</b>
                <b>${views}</b>
             </p>
             <p class="info-item">
-               <b>Comments</b>
+               <b>Comments:</b>
                <b>${comments}</b>
             </p>
             <p class="info-item">
-               <b>Downloads</b>
+               <b>Downloads:</b>
                <b>${downloads}</b>
             </p>
          </div>
@@ -81,7 +79,7 @@ function createMarkup(images) {
     
       refs.gallery.insertAdjacentHTML('beforeend', markup);
       checkEndOfArticles(images.totalHits)
-      lightbox.refresh()
+      lightbox.refresh();
    }
    
 }
