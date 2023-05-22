@@ -18,6 +18,7 @@ var lightbox = new SimpleLightbox('.js-gallery-container  a', {
    doClose:true,  
 })
 
+
 refs.form.addEventListener('submit', onFormSearch);
 refs.loadMoreBtn.addEventListener('click', onLoadMoreBtn);
 
@@ -33,13 +34,13 @@ function onFormSearch(e) {
       Notiflix.Notify.info('Please write something',{timeout:3000})
    } else { 
    clearArticlesContainer();
-      service.getFetch().then(createMarkup)
+      service.getFetch().then(createMarkup).catch(onCatchError)
    }
    
 };
 
 function onLoadMoreBtn() {
-   service.getFetch().then(createMarkup);
+   service.getFetch().then(createMarkup).catch(onCatchError);
    
 }
 
@@ -100,5 +101,10 @@ function checkEndOfArticles(totalHits) {
    if (totalHits/service.per_page<=service.page) {
       refs.loadMoreBtn.classList.add('is-hidden');
      return Notiflix.Notify.info(`We're sorry, but you've reached the end of search results.`,{timeout:3000})
+   }
+}
+function onCatchError(error) {
+   if (error) {
+      Notiflix.Notify.failure(`Error:${error.message}!!!!!!!!`,{timeout:3000})
    }
 }
