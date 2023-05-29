@@ -1,5 +1,5 @@
 import axios from "axios";
-export default class NewApiService{
+export default class NewApiService {
    constructor() {
       this.searchValue = '';
       this.page = 1;
@@ -9,13 +9,19 @@ export default class NewApiService{
    async getFetch() {
       const BASE_URL = 'https://pixabay.com/api/'
       const API_KEY = '36269474-83b619d05c1927e78eac327ce';
+      const url = `${BASE_URL}?key=${API_KEY}&q=${this.searchValue}&image_type=photo&orientation=horizontal&safesearch=true&page=${this.page}&per_page=${this.per_page}`
 
-  const response = await fetch(`${BASE_URL}?key=${API_KEY}&q=${this.searchValue}&image_type=photo&orientation=horizontal&safesearch=true&page=${this.page}&per_page=${this.per_page}`);
-   const result = await response.json();
-   const icr = await this.incrementPage();
-   console.log(result)
-   return result;
-}
+      try {
+         const response = await axios.get(url);
+         const result = response.data;
+         await this.incrementPage();
+         return result;
+      } catch (error) {
+         throw new Error(error.message);
+      }
+   }
+
+
 
    incrementPage() {
       this.page += 1;

@@ -1,7 +1,7 @@
 
 
 import './css/common.css'
-import axios from 'axios';
+
 import Notiflix from 'notiflix';
 import NewApiService from './js/api-service';
 import SimpleLightbox from 'simplelightbox';
@@ -21,34 +21,50 @@ var lightbox = new SimpleLightbox('.js-gallery-container  a', {
 
 refs.form.addEventListener('submit', onFormSearch);
 refs.loadMoreBtn.addEventListener('click', onLoadMoreBtn);
-
+let hitsCounter = 0;
 const service = new NewApiService();
 refs.loadMoreBtn.classList.add('is-hidden');
 
-function onFormSearch(e) {
+async function onFormSearch(e) {
    e.preventDefault();
    service.resetPage();
    service.query = e.currentTarget.elements.searchQuery.value.trim();
 
-   if (service.query==='') {
-      Notiflix.Notify.info('Please write something',{timeout:3000})
-   } else { 
-   clearArticlesContainer();
-      service.getFetch().then(createMarkup).catch(onCatchError)
+   if (service.query === '') {
+      Notiflix.Notify.info('Please write something', { timeout: 3000 })
+   } else {
+      clearArticlesContainer();
+    try {
+         const images = await service.getFetch();
+         createMarkup(images);
+      } catch (error) {
+         onCatchError(error);
+      }
+   //   service.getFetch().then(createMarkup).catch(onCatchError)
+      
    }
    
 };
 
-function onLoadMoreBtn() {
-   service.getFetch().then(createMarkup).catch(onCatchError);
-   
+async function onLoadMoreBtn() {
+try {
+      const images = await service.getFetch();
+      createMarkup(images);
+   } catch (error) {
+      onCatchError(error);
+   }
+      // service.getFetch().then(createMarkup).catch(onCatchError);
+  
+      
 }
 
 function createMarkup(images) {
+   console.log(images)
    console.log(images.totalHits)
    showTotalHits(images.totalHits, images.hits.length);
-   
+   console.log(images.hits.length)
    if (images.hits.length === 0) {
+      refs.loadMoreBtn.classList.add('is-hidden')
       Notiflix.Notify.warning('Sorry, there are no images matching your search query. Please try again.', { timeout: 3000 }
       );
    } else {
@@ -79,7 +95,7 @@ function createMarkup(images) {
    }).join('');
     
       refs.gallery.insertAdjacentHTML('beforeend', markup);
-      checkEndOfArticles(images.totalHits)
+      checkEndOfArticles(images.totalHits,images.hits.length)
       lightbox.refresh();
    }
    
@@ -97,9 +113,11 @@ function showTotalHits(totalHits, length) {
    }
 }
 
-function checkEndOfArticles(totalHits) {
-   if (totalHits/service.per_page<=service.page) {
-      refs.loadMoreBtn.classList.add('is-hidden');
+function checkEndOfArticles(totalHits,length) {
+   hitsCounter += length;
+   
+   if (hitsCounter>=totalHits) {
+     refs.loadMoreBtn.classList.add('is-hidden');
      return Notiflix.Notify.info(`We're sorry, but you've reached the end of search results.`,{timeout:3000})
    }
 }
