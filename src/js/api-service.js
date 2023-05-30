@@ -14,7 +14,7 @@ export default class NewApiService {
       try {
          const response = await axios.get(url);
          const result = response.data;
-         await this.incrementPage();
+         this.incrementPage();
          return result;
       } catch (error) {
          throw new Error(error.message);
